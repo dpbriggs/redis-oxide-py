@@ -184,6 +184,7 @@ Bloom filters are usually used to *avoid* expensive operations, like making api 
 If BCONTAINS returns false, you are sure that the key is not in the filter.
 
 .. code-block:: python
+
     def expensive_operation(remote_server):
         pass
 
