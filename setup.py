@@ -10,9 +10,9 @@ long_description = f.read()
 f.close()
 
 setup(
-    name='redis',
+    name='redis-oxide',
     version=__version__,
-    description='Python client for Redis key-value store',
+    description='Python client for redis-oxide key-value store',
     long_description=long_description,
     long_description_content_type='text/x-rst',
     url='https://github.com/andymccurdy/redis-py',

@@ -1,31 +1,37 @@
-redis-py
+redis-oxide-py
 ========
 
-The Python interface to the Redis key-value store.
+**NOTE**: This is a fork of the fantastic `redis-py <https://github.com/andymccurdy/redis-oxide-py>`_. Huge shoutout to @andymccurdy for this fantastic project.
 
-.. image:: https://secure.travis-ci.org/andymccurdy/redis-py.svg?branch=master
-        :target: https://travis-ci.org/andymccurdy/redis-py
-.. image:: https://readthedocs.org/projects/redis-py/badge/?version=latest&style=flat
-        :target: https://redis-py.readthedocs.io/en/latest/
-.. image:: https://badge.fury.io/py/redis.svg
-        :target: https://pypi.org/project/redis/
-.. image:: https://codecov.io/gh/andymccurdy/redis-py/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/andymccurdy/redis-py
+The Python interface to the redis-oxide key-value store.
 
 Installation
 ------------
 
-redis-py requires a running Redis server. See `Redis's quickstart
+**TODO**: Distribute this project.
+
+For now, you'll need to clone the project:
+
+https://github.com/dpbriggs/redis-oxide-py
+.. code-block:: bash
+
+    $ git clone https://github.com/dpbriggs/redis-oxide-py
+    $ python -m venv  venv
+    $ venv/bin/activate
+    $ pip install .
+    $ echo "redis-oxide-py is not available in this virtual environment. use deactivate or CTRL+D to leave"
+
+redis-oxide-py requires a running Redis server. See `Redis's quickstart
 <https://redis.io/topics/quickstart>`_ for installation instructions.
 
-redis-py can be installed using `pip` similar to other Python packages. Do not use `sudo`
+redis-oxide-py can be installed using `pip` similar to other Python packages. Do not use `sudo`
 with `pip`. It is usually good to work in a
 `virtualenv <https://virtualenv.pypa.io/en/latest/>`_ or
 `venv <https://docs.python.org/3/library/venv.html>`_ to avoid conflicts with other package
 managers and Python projects. For a quick introduction see
 `Python Virtual Environments in Five Minutes <https://bit.ly/py-env>`_.
 
-To install redis-py, simply:
+To install redis-oxide-py, simply:
 
 .. code-block:: bash
 
@@ -60,24 +66,16 @@ Redis command that returns a string type will be decoded with the `encoding`
 specified.
 
 
-Upgrading from redis-py 2.X to 3.0
-----------------------------------
-
-redis-py 3.0 introduces many new features but required a number of backwards
-incompatible changes to be made in the process. This section attempts to
-provide an upgrade path for users migrating from 2.X to 3.0.
-
-
 Python Version Support
 ^^^^^^^^^^^^^^^^^^^^^^
 
-redis-py 3.0 supports Python 2.7 and Python 3.5+.
+redis-oxide-py 3.0 supports Python 2.7 and Python 3.5+.
 
 
 Client Classes: Redis and StrictRedis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-redis-py 3.0 drops support for the legacy "Redis" client class. "StrictRedis"
+redis-oxide-py 3.0 drops support for the legacy "Redis" client class. "StrictRedis"
 has been renamed to "Redis" and an alias named "StrictRedis" is provided so
 that users previously using "StrictRedis" can continue to run unchanged.
 
@@ -103,12 +101,12 @@ use any of the following commands:
 SSL Connections
 ^^^^^^^^^^^^^^^
 
-redis-py 3.0 changes the default value of the `ssl_cert_reqs` option from
+redis-oxide-py 3.0 changes the default value of the `ssl_cert_reqs` option from
 `None` to `'required'`. See
-`Issue 1016 <https://github.com/andymccurdy/redis-py/issues/1016>`_. This
+`Issue 1016 <https://github.com/andymccurdy/redis-oxide-py/issues/1016>`_. This
 change enforces hostname validation when accepting a cert from a remote SSL
 terminator. If the terminator doesn't properly set the hostname on the cert
-this will cause redis-py 3.0 to raise a ConnectionError.
+this will cause redis-oxide-py 3.0 to raise a ConnectionError.
 
 This check can be disabled by setting `ssl_cert_reqs` to `None`. Note that
 doing so removes the security check. Do so at your own risk.
@@ -120,14 +118,14 @@ proper hostnames and turning off hostname verification is currently required.
 MSET, MSETNX and ZADD
 ^^^^^^^^^^^^^^^^^^^^^
 
-These commands all accept a mapping of key/value pairs. In redis-py 2.X
+These commands all accept a mapping of key/value pairs. In redis-oxide-py 2.X
 this mapping could be specified as ``*args`` or as ``**kwargs``. Both of these
 styles caused issues when Redis introduced optional flags to ZADD. Relying on
 ``*args`` caused issues with the optional argument order, especially in Python
 2.7. Relying on ``**kwargs`` caused potential collision issues of user keys with
 the argument names in the method signature.
 
-To resolve this, redis-py 3.0 has changed these three commands to all accept
+To resolve this, redis-oxide-py 3.0 has changed these three commands to all accept
 a single positional argument named mapping that is expected to be a dict. For
 MSET and MSETNX, the dict is a mapping of key-names -> values. For ZADD, the
 dict is a mapping of element-names -> score.
@@ -147,7 +145,7 @@ keys and values as a dict to these commands.
 ZINCRBY
 ^^^^^^^
 
-redis-py 2.X accidentally modified the argument order of ZINCRBY, swapping the
+redis-oxide-py 2.X accidentally modified the argument order of ZINCRBY, swapping the
 order of value and amount. ZINCRBY now looks like:
 
 .. code-block:: python
@@ -157,30 +155,68 @@ order of value and amount. ZINCRBY now looks like:
 All 2.X users that rely on ZINCRBY must swap the order of amount and value
 for the command to continue to work as intended.
 
+BINSERT and BCONTAINS
+^^^^^^^^^^^^^^^^^^^^^
+
+redis-oxide supports the bloom filter datastructure. It can be used to quickly test association in a space efficient way.
+
+.. code-block:: python
+
+    def binsert(self, name, value):
+    def bcontains(self, name, value):
+
+Bloom filters are used in scenarios where you only care about association of an element, and want space and time efficiency.
+They offer (limited) but similar to functionality to sets (see below).
+The main difference is bloom filters are more space and time efficient, at the cost of false positives.
+By default, redis-oxide allows for a maximum theoretical 5% false positive rate. In practice you may
+find false positives at a far lower rate.
+
+Comparison with Sets (ZADD and SIsMember):
+
+* Sets record the elements inserted, so size of set is linear with respect to elements inserted.
+* Sets occasionally pay a hefty reallocation cost when the set starts getting full.
+* Bloom filters only store the fingerprint of an element in a basically constant way
+* redis-oxide implements a scalable bloom filter, so you'll pay allocation costs less often, and each allocation is relatively small.
+ 
+Example:
+
+Bloom filters are usually used to *avoid* expensive operations, like making api calls.
+If BCONTAINS returns false, you are sure that the key is not in the filter.
+
+.. code-block:: python
+    def expensive_operation(remote_server):
+        pass
+
+    for server_data_key in server_data_keys:
+        if not r.bcontains(self, "data_chunks_bloom", server_data_key):
+            # We know for certain this server doesn't contain the data care about
+            continue
+        expensive_operation(server_data_key)
+
 
 Encoding of User Input
 ^^^^^^^^^^^^^^^^^^^^^^
 
-redis-py 3.0 only accepts user data as bytes, strings or numbers (ints, longs
+redis-oxide-py 3.0 only accepts user data as bytes, strings or numbers (ints, longs
 and floats). Attempting to specify a key or a value as any other type will
 raise a DataError exception.
 
-redis-py 2.X attempted to coerce any type of input into a string. While
+redis-oxide-py 2.X attempted to coerce any type of input into a string. While
 occasionally convenient, this caused all sorts of hidden errors when users
 passed boolean values (which were coerced to 'True' or 'False'), a None
 value (which was coerced to 'None') or other values, such as user defined
 types.
 
 All 2.X users should make sure that the keys and values they pass into
-redis-py are either bytes, strings or numbers.
+redis-oxide-py are either bytes, strings or numbers.
 
 
 Locks
 ^^^^^
 
-redis-py 3.0 drops support for the pipeline-based Lock and now only supports
+redis-oxide-py 3.0 drops support for the pipeline-based Lock and now only supports
 the Lua-based lock. In doing so, LuaLock has been renamed to Lock. This also
-means that redis-py Lock objects require Redis server 2.6 or greater.
+means that redis-oxide-py Lock objects require Redis server 2.6 or greater.
 
 2.X users that were explicitly referring to "LuaLock" will have to now refer
 to "Lock" instead.
@@ -189,7 +225,7 @@ to "Lock" instead.
 Locks as Context Managers
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-redis-py 3.0 now raises a LockError when using a lock as a context manager and
+redis-oxide-py 3.0 now raises a LockError when using a lock as a context manager and
 the lock cannot be acquired within the specified timeout. This is more of a
 bug fix than a backwards incompatible change. However, given an error is now
 raised where none was before, this might alarm some users.
@@ -210,12 +246,12 @@ API Reference
 -------------
 
 The `official Redis command documentation <https://redis.io/commands>`_ does a
-great job of explaining each command in detail. redis-py attempts to adhere
+great job of explaining each command in detail. redis-oxide-py attempts to adhere
 to the official command syntax. There are a few exceptions:
 
 * **SELECT**: Not implemented. See the explanation in the Thread Safety section
   below.
-* **DEL**: 'del' is a reserved keyword in the Python syntax. Therefore redis-py
+* **DEL**: 'del' is a reserved keyword in the Python syntax. Therefore redis-oxide-py
   uses 'delete' instead.
 * **MULTI/EXEC**: These are implemented as part of the Pipeline class. The
   pipeline is wrapped with the MULTI and EXEC statements by default when it
@@ -227,7 +263,7 @@ to the official command syntax. There are a few exceptions:
   will return a PubSub instance where you can subscribe to channels and listen
   for messages. You can only call PUBLISH from the Redis client (see
   `this comment on issue #151
-  <https://github.com/andymccurdy/redis-py/issues/151#issuecomment-1545015>`_
+  <https://github.com/andymccurdy/redis-oxide-py/issues/151#issuecomment-1545015>`_
   for details).
 * **SCAN/SSCAN/HSCAN/ZSCAN**: The \*SCAN commands are implemented as they
   exist in the Redis documentation. In addition, each command has an equivalent
@@ -242,7 +278,7 @@ More Detail
 Connection Pools
 ^^^^^^^^^^^^^^^^
 
-Behind the scenes, redis-py uses a connection pool to manage connections to
+Behind the scenes, redis-oxide-py uses a connection pool to manage connections to
 a Redis server. By default, each Redis instance you create will in turn create
 its own connection pool. You can override this behavior and use an existing
 connection pool by passing an already created connection pool instance to the
@@ -258,7 +294,7 @@ connections are managed.
 Connections
 ^^^^^^^^^^^
 
-ConnectionPools manage a set of Connection instances. redis-py ships with two
+ConnectionPools manage a set of Connection instances. redis-oxide-py ships with two
 types of Connections. The default, Connection, is a normal TCP socket based
 connection. The UnixDomainSocketConnection allows for clients running on the
 same device as the server to connect via a unix domain socket. To use a
@@ -290,13 +326,13 @@ and servers are often configured to kill connections that remain idle for a
 given threshold.
 
 When a connection becomes disconnected, the next command issued on that
-connection will fail and redis-py will raise a ConnectionError to the caller.
-This allows each application that uses redis-py to handle errors in a way
+connection will fail and redis-oxide-py will raise a ConnectionError to the caller.
+This allows each application that uses redis-oxide-py to handle errors in a way
 that's fitting for that specific application. However, constant error
 handling can be verbose and cumbersome, especially when socket disconnections
 happen frequently in many production environments.
 
-To combat this, redis-py can issue regular health checks to assess the
+To combat this, redis-oxide-py can issue regular health checks to assess the
 liveliness of a connection just before issuing a command. Users can pass
 ``health_check_interval=N`` to the Redis or ConnectionPool classes or
 as a query argument within a Redis URL. The value of ``health_check_interval``
@@ -326,8 +362,8 @@ Parsers
 ^^^^^^^
 
 Parser classes provide a way to control how responses from the Redis server
-are parsed. redis-py ships with two parser classes, the PythonParser and the
-HiredisParser. By default, redis-py will attempt to use the HiredisParser if
+are parsed. redis-oxide-py ships with two parser classes, the PythonParser and the
+HiredisParser. By default, redis-oxide-py will attempt to use the HiredisParser if
 you have the hiredis module installed and will fallback to the PythonParser
 otherwise.
 
@@ -337,7 +373,7 @@ kind enough to create Python bindings. Using Hiredis can provide up to a
 performance increase is most noticeable when retrieving many pieces of data,
 such as from LRANGE or SMEMBERS operations.
 
-Hiredis is available on PyPI, and can be installed via pip just like redis-py.
+Hiredis is available on PyPI, and can be installed via pip just like redis-oxide-py.
 
 .. code-block:: bash
 
@@ -377,7 +413,7 @@ database remains selected until another is selected or until the connection is
 closed. This creates an issue in that connections could be returned to the pool
 that are connected to a different database.
 
-As a result, redis-py does not implement the SELECT command on client
+As a result, redis-oxide-py does not implement the SELECT command on client
 instances. If you use multiple Redis databases within the same application, you
 should create a separate client instance (and possibly a separate connection
 pool) for each database.
@@ -508,7 +544,7 @@ which is much easier to read:
 Publish / Subscribe
 ^^^^^^^^^^^^^^^^^^^
 
-redis-py includes a `PubSub` object that subscribes to channels and listens
+redis-oxide-py includes a `PubSub` object that subscribes to channels and listens
 for new messages. Creating a `PubSub` object is easy.
 
 .. code-block:: python
@@ -580,7 +616,7 @@ Unsubscribing works just like subscribing. If no arguments are passed to
     >>> p.get_message()
     {'channel': 'my-*', 'data': 0L, 'pattern': None, 'type': 'punsubscribe'}
 
-redis-py also allows you to register callback functions to handle published
+redis-oxide-py also allows you to register callback functions to handle published
 messages. Message handlers take a single argument, the message, which is a
 dictionary just like the examples above. To subscribe to a channel or pattern
 with a message handler, pass the channel or pattern name as a keyword argument
@@ -645,7 +681,7 @@ application.
     >>>         # do something with the message
     >>>     time.sleep(0.001)  # be nice to the system :)
 
-Older versions of redis-py only read messages with `pubsub.listen()`. listen()
+Older versions of redis-oxide-py only read messages with `pubsub.listen()`. listen()
 is a generator that blocks until a message is available. If your application
 doesn't need to do anything else but receive and act on messages received from
 redis, listen() is an easy way to get up an running.
@@ -667,7 +703,7 @@ loop.
 
 Note: Since we're running in a separate thread, there's no way to handle
 messages that aren't automatically handled with registered message handlers.
-Therefore, redis-py prevents you from calling `run_in_thread()` if you're
+Therefore, redis-oxide-py prevents you from calling `run_in_thread()` if you're
 subscribed to patterns or channels that don't have message handlers attached.
 
 .. code-block:: python
@@ -717,7 +753,7 @@ supported:
 
 Monitor
 ^^^^^^^
-redis-py includes a `Monitor` object that streams every command processed
+redis-oxide-py includes a `Monitor` object that streams every command processed
 by the Redis server. Use `listen()` on the `Monitor` object to block
 until a command is received.
 
@@ -731,9 +767,9 @@ until a command is received.
 Lua Scripting
 ^^^^^^^^^^^^^
 
-redis-py supports the EVAL, EVALSHA, and SCRIPT commands. However, there are
+redis-oxide-py supports the EVAL, EVALSHA, and SCRIPT commands. However, there are
 a number of edge cases that make these commands tedious to use in real world
-scenarios. Therefore, redis-py exposes a Script object that makes scripting
+scenarios. Therefore, redis-oxide-py exposes a Script object that makes scripting
 much easier to use.
 
 To create a Script instance, use the `register_script` function on a client
@@ -759,7 +795,7 @@ function. Script instances accept the following optional arguments:
 * **keys**: A list of key names that the script will access. This becomes the
   KEYS list in Lua.
 * **args**: A list of argument values. This becomes the ARGV list in Lua.
-* **client**: A redis-py Client or Pipeline instance that will invoke the
+* **client**: A redis-oxide-py Client or Pipeline instance that will invoke the
   script. If client isn't specified, the client that initially
   created the Script instance (the one that `register_script` was
   invoked from) will be used.
@@ -806,11 +842,11 @@ execution.
 Sentinel support
 ^^^^^^^^^^^^^^^^
 
-redis-py can be used together with `Redis Sentinel <https://redis.io/topics/sentinel>`_
+redis-oxide-py can be used together with `Redis Sentinel <https://redis.io/topics/sentinel>`_
 to discover Redis nodes. You need to have at least one Sentinel daemon running
-in order to use redis-py's Sentinel support.
+in order to use redis-oxide-py's Sentinel support.
 
-Connecting redis-py to the Sentinel instance(s) is easy. You can use a
+Connecting redis-oxide-py to the Sentinel instance(s) is easy. You can use a
 Sentinel connection to discover the master and slaves network addresses:
 
 .. code-block:: python
@@ -853,7 +889,7 @@ Scan Iterators
 ^^^^^^^^^^^^^^
 
 The \*SCAN commands introduced in Redis 2.8 can be cumbersome to use. While
-these commands are fully supported, redis-py also exposes the following methods
+these commands are fully supported, redis-oxide-py also exposes the following methods
 that return Python iterators for convenience: `scan_iter`, `hscan_iter`,
 `sscan_iter` and `zscan_iter`.
 
@@ -867,15 +903,19 @@ that return Python iterators for convenience: `scan_iter`, `hscan_iter`,
     B 2
     C 3
 
-Author
-^^^^^^
-
-redis-py is developed and maintained by Andy McCurdy (sedrik@gmail.com).
+Attribution
+^^^^^^^^^^^
+This project is a fork of redis-py developed and maintained by Andy McCurdy (sedrik@gmail.com).
 It can be found here: https://github.com/andymccurdy/redis-py
 
-Special thanks to:
+Andy McCurdy extends a special thanks to:
 
 * Ludovico Magnocavallo, author of the original Python Redis client, from
   which some of the socket code is still used.
 * Alexander Solovyov for ideas on the generic response callback system.
 * Paul Hubbard for initial packaging support.
+
+Author
+^^^^^^
+
+This fork is maintained and developed by David Briggs (david@dpbriggs.ca)

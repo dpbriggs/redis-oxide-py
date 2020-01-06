@@ -507,7 +507,7 @@ class Redis(object):
     RESPONSE_CALLBACKS = dict_merge(
         string_keys_to_dict(
             'AUTH EXPIRE EXPIREAT HEXISTS HMSET MOVE MSETNX PERSIST '
-            'PSETEX RENAMENX SISMEMBER SMOVE SETEX SETNX',
+            'PSETEX RENAMENX SISMEMBER SMOVE SETEX SETNX BCONTAINS BINSERT',
             bool
         ),
         string_keys_to_dict(
@@ -1851,6 +1851,13 @@ class Redis(object):
     def unlink(self, *names):
         "Unlink one or more keys specified by ``names``"
         return self.execute_command('UNLINK', *names)
+
+    # BLOOM COMMANDS
+    def binsert(self, name, value):
+        return self.execute_command('BINSERT', name, value)
+
+    def bcontains(self, name, value):
+        return self.execute_command('BCONTAINS', name, value)
 
     # LIST COMMANDS
     def blpop(self, keys, timeout=0):
